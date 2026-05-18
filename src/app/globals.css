@@ -1,0 +1,33 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F4F2ED;
+  --surface: #FDFCF9;
+  --border: #E0DBD3;
+  --border-light: #EDE9E3;
+  --text: #1A1714;
+  --muted: #6B6560;
+  --accent: #2D5A3D;
+  --accent-light: #E8F0EB;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06);
+}
+
+html { font-size: 15px; }
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Year colors */
+.yt-2022 { background: #DBEAFE; color: #1D4ED8; }
+.yt-2023 { background: #FEE2E2; color: #991B1B; }
+.yt-2024 { background: #DCFCE7; color: #166534; }
+.yt-2025 { background: #F3E8FF; color: #6B21A8; }
+.yr-active-2022 { background: #DBEAFE !important; color: #1D4ED8 !important; border-color: #93C5FD !important; }
+.yr-active-2023 { background: #FEE2E2 !important; color: #991B1B !important; border-color: #FCA5A5 !important; }
+.yr-active-2024 { background: #DCFCE7 !important; color: #166534 !important; border-color: #86EFAC !important; }
+.yr-active-2025 { background: #F3E8FF !important; color: #6B21A8 !important; border-color: #D8B4FE !important; }
