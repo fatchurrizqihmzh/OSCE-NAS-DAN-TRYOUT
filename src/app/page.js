@@ -28,6 +28,7 @@ export default function Home() {
   const [activeYears, setActiveYears] = useState(new Set(YEARS))
   const [search, setSearch] = useState('')
   const [filledCount, setFilledCount] = useState(0)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => { setFilledCount(countFilled()) }, [])
 
@@ -45,11 +46,9 @@ export default function Home() {
     const systems = activeSys === 'all' ? SYSTEMS : SYSTEMS.filter(s => s.key === activeSys)
     const result = []
     let total = 0, multi = 0
-
     for (const sys of systems) {
       const topics = (ALL_TOPICS[sys.key] || []).filter(t => {
-        const hasYear = t.years.some(y => activeYears.has(y))
-        if (!hasYear) return false
+        if (!t.years.some(y => activeYears.has(y))) return false
         if (!q) return true
         return [t.name, t.ss, t.dd, t.tx].join(' ').toLowerCase().includes(q)
       })
@@ -73,32 +72,50 @@ export default function Home() {
   }, [activeYears])
 
   const handleSaveAll = useCallback(() => {
-    // trigger save on all open cards — we'll re-count filled after
     setTimeout(() => setFilledCount(countFilled()), 300)
   }, [])
 
+  const handleSysSelect = (sys) => {
+    setActiveSys(sys)
+    setSidebarOpen(false)
+  }
+
   return (
-    <>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Header search={search} onSearch={setSearch} onSaveAll={handleSaveAll} />
+
       <div style={{ display: 'flex' }}>
-        {/* Sidebar hidden on mobile via inline media trick */}
-        <div className="sidebar-wrap">
-          <Sidebar activeSys={activeSys} onSelect={setActiveSys} topicCounts={topicCounts} />
+        {/* Desktop Sidebar */}
+        <div className="desktop-sidebar">
+          <Sidebar activeSys={activeSys} onSelect={handleSysSelect} topicCounts={topicCounts} />
         </div>
 
-        <main style={{ flex: 1, padding: '1.25rem 1.5rem', minWidth: 0, maxWidth: 920 }}>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.05rem',
-              color: 'var(--muted)', fontWeight: 400, marginBottom: 8 }}>
-              {activeSys === 'all' ? 'Semua Sistem Organ' :
-                SYSTEMS.find(s => s.key === activeSys)?.label}
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+            <div onClick={() => setSidebarOpen(false)} style={{
+              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)'
+            }} />
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 260, zIndex: 201 }}>
+              <Sidebar activeSys={activeSys} onSelect={handleSysSelect} topicCounts={topicCounts} />
             </div>
-            <div style={{ padding: '8px 12px', background: '#FEF9C3', border: '1px solid #FDE047',
-              borderRadius: 8, fontSize: 12, color: '#713F12', marginBottom: 10 }}>
-              <strong>⚠️ Koreksi Human Error Excel:</strong> Data telah disesuaikan —
-              mis. ANC & Mastitis (dipindah ke Obgyn), Gizi Buruk/Cushing (→ Endokrin),
-              Syok Anafilaksis (→ Hemato), Meniscus Tear (→ Musku), Dermatitis (→ Integumen), dll.
-            </div>
+          </div>
+        )}
+
+        <main style={{ flex: 1, padding: '16px 20px', minWidth: 0, maxWidth: 960 }}>
+          {/* Mobile header row */}
+          <div className="mobile-menu-row" style={{ display: 'none', marginBottom: 12 }}>
+            <button onClick={() => setSidebarOpen(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 8, color: 'var(--text2)', cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: 13, fontWeight: 500,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              {activeSys === 'all' ? 'Semua Sistem' : SYSTEMS.find(s => s.key === activeSys)?.label}
+            </button>
           </div>
 
           <FilterBar
@@ -108,23 +125,36 @@ export default function Home() {
           />
 
           {filtered.sections.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem',
-              color: 'var(--muted)', fontSize: 14 }}>
-              😕 Tidak ada topik untuk filter ini.
+            <div style={{
+              textAlign: 'center', padding: '60px 20px',
+              color: 'var(--text3)', fontSize: 14,
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>Tidak ada topik ditemukan</div>
+              <div style={{ fontSize: 12 }}>Coba ubah filter tahun atau kata kunci pencarian</div>
             </div>
           ) : (
             filtered.sections.map(({ sys, topics }) => (
-              <section key={sys.key} style={{ marginBottom: '1.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8,
-                  marginBottom: '0.65rem', paddingBottom: '0.4rem',
-                  borderBottom: '1.5px solid var(--border)' }}>
-                  <span style={{ fontSize: 18 }}>{sys.icon}</span>
-                  <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.15rem',
-                    fontWeight: 400 }}>{sys.label}</h2>
-                  <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--muted)' }}>
-                    {topics.length} topik
-                  </span>
+              <section key={sys.key} style={{ marginBottom: '24px' }}>
+                {/* Section header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  marginBottom: 10, padding: '10px 14px',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)',
+                }}>
+                  <span style={{ fontSize: 20 }}>{sys.icon}</span>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    {sys.label}
+                  </h2>
+                  <span style={{
+                    marginLeft: 'auto', fontSize: 11, padding: '2px 8px',
+                    borderRadius: 20, background: 'var(--surface2)',
+                    color: 'var(--text3)', fontWeight: 600,
+                  }}>{topics.length} topik</span>
                 </div>
+
                 {topics.map(topic => (
                   <TopicCard key={topic.id} topic={topic} />
                 ))}
@@ -135,10 +165,13 @@ export default function Home() {
       </div>
 
       <style jsx global>{`
-        .sidebar-wrap { display: block; }
-        @media (max-width: 680px) { .sidebar-wrap { display: none; } }
-        main { max-width: 100%; }
+        .desktop-sidebar { display: block; }
+        .mobile-menu-row { display: none !important; }
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+          .mobile-menu-row { display: flex !important; }
+        }
       `}</style>
-    </>
+    </div>
   )
 }
